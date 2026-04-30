@@ -1,0 +1,27 @@
+# ── Python ──────────────────────────────────────
+__pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+build/
+.env
+venv/
+env/
+
+# ── ML artifacts ────────────────────────────────
+backend/saved_model/
+backend/dataset_stats.json
+backend/feature_importance.json
+
+# ── Node ────────────────────────────────────────
+node_modules/
+frontend/node_modules/
+frontend/dist/
+
+# ── IDE / OS ────────────────────────────────────
+.vscode/
+.idea/
+*.swp
+*.swo
+Thumbs.db
+.DS_Store
