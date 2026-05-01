@@ -3,6 +3,7 @@
 ## **Part 1: Deploy Backend to Render**
 
 ### Step 1.1: Prepare Your GitHub Repository
+
 ```bash
 git add .
 git commit -m "Add Procfile and prepare for deployment"
@@ -10,6 +11,7 @@ git push
 ```
 
 ### Step 1.2: Deploy on Render
+
 1. Go to https://render.com and sign up (free)
 2. Click **"New +"** → **"Web Service"**
 3. Connect your GitHub account and select `PriyVerse/DiabetIQ-MLC`
@@ -23,6 +25,7 @@ git push
 6. Wait 3-5 minutes for deployment. You'll get a URL like: `https://diabetiq-backend.onrender.com`
 
 ### Step 1.3: Note Your Backend URL
+
 Copy the URL from Render (e.g., `https://diabetiq-backend.onrender.com`)
 
 ---
@@ -30,13 +33,17 @@ Copy the URL from Render (e.g., `https://diabetiq-backend.onrender.com`)
 ## **Part 2: Deploy Frontend to Vercel**
 
 ### Step 2.1: Create Environment File
+
 Create `.env.production` in the `frontend/` folder:
+
 ```
 VITE_API_URL=https://diabetiq-backend.onrender.com
 ```
+
 (Replace with your actual Render URL)
 
 ### Step 2.2: Deploy on Vercel
+
 1. Go to https://vercel.com and sign up (free)
 2. Click **"Add New Project"**
 3. Select your `PriyVerse/DiabetIQ-MLC` repository
@@ -63,12 +70,12 @@ VITE_API_URL=https://diabetiq-backend.onrender.com
 
 ## **Common Issues & Fixes**
 
-| Issue | Solution |
-|-------|----------|
-| Frontend can't connect to backend | Make sure `VITE_API_URL` env var is set in Vercel |
-| 503 error on Render backend | Free tier may need a minute to wake up. Refresh. |
-| CORS errors | Already configured in `main.py`, but check browser console |
-| Model files not found | Ensure `saved_model/` folder is committed to git |
+| Issue                             | Solution                                                   |
+| --------------------------------- | ---------------------------------------------------------- |
+| Frontend can't connect to backend | Make sure `VITE_API_URL` env var is set in Vercel          |
+| 503 error on Render backend       | Free tier may need a minute to wake up. Refresh.           |
+| CORS errors                       | Already configured in `main.py`, but check browser console |
+| Model files not found             | Ensure `saved_model/` folder is committed to git           |
 
 ---
 
