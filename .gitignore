@@ -9,7 +9,6 @@ venv/
 env/
 
 # ── ML artifacts ────────────────────────────────
-backend/saved_model/
 backend/dataset_stats.json
 backend/feature_importance.json
 
