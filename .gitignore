@@ -8,9 +8,13 @@ build/
 venv/
 env/
 
+# ── SSH Keys (NEVER commit these!) ──────────────
+GitKeys
+GitKeys.pub
+
 # ── ML artifacts ────────────────────────────────
-backend/dataset_stats.json
-backend/feature_importance.json
+# Note: dataset_stats.json and feature_importance.json must be committed
+# because the backend loads them at startup on deploy.
 
 # ── Node ────────────────────────────────────────
 node_modules/

@@ -27,11 +27,26 @@ app.add_middleware(
 )
 
 # ── Load model & scaler ──────────────────────────────────────────────────
-BASE_DIR = os.path.dirname(__file__)
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 MODEL_PATH = os.path.join(BASE_DIR, "saved_model", "diabetes_model.pkl")
 SCALER_PATH = os.path.join(BASE_DIR, "saved_model", "scaler.pkl")
 STATS_PATH = os.path.join(BASE_DIR, "dataset_stats.json")
 IMPORTANCE_PATH = os.path.join(BASE_DIR, "feature_importance.json")
+
+# Auto-generate missing artifacts by running train_model.py
+required_files = [MODEL_PATH, SCALER_PATH, STATS_PATH, IMPORTANCE_PATH]
+if not all(os.path.isfile(f) for f in required_files):
+    print("⚠️  Some model artifacts are missing. Running train_model.py ...")
+    import subprocess
+    result = subprocess.run(
+        ["python", os.path.join(BASE_DIR, "train_model.py")],
+        cwd=BASE_DIR,
+        capture_output=True,
+        text=True,
+    )
+    print(result.stdout)
+    if result.returncode != 0:
+        print(f"❌ train_model.py failed:\n{result.stderr}")
 
 model = joblib.load(MODEL_PATH)
 scaler = joblib.load(SCALER_PATH)

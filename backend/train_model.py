@@ -14,7 +14,23 @@ from sklearn.metrics import accuracy_score, classification_report, confusion_mat
 import joblib
 
 # ── Load dataset ──────────────────────────────────────────────────────────────
-DATA_PATH = os.path.join(os.path.dirname(__file__), "..", "diabetes.csv")
+# Try multiple paths: parent dir (local dev) and current dir (Render deploy)
+_base = os.path.dirname(os.path.abspath(__file__))
+_candidates = [
+    os.path.join(_base, "..", "diabetes.csv"),   # local dev (repo root)
+    os.path.join(_base, "diabetes.csv"),          # if copied into backend/
+    "diabetes.csv",                               # current working dir
+]
+DATA_PATH = None
+for _p in _candidates:
+    if os.path.isfile(_p):
+        DATA_PATH = _p
+        break
+if DATA_PATH is None:
+    raise FileNotFoundError(
+        f"diabetes.csv not found. Searched: {_candidates}"
+    )
+print(f"Using dataset: {DATA_PATH}")
 df = pd.read_csv(DATA_PATH)
 
 print(f"Dataset shape: {df.shape}")
