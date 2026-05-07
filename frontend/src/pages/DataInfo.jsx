@@ -147,7 +147,7 @@ export default function DataInfo() {
             </h2>
           </div>
 
-          <div style={{ background: 'white', border: '1px solid var(--border-light)', borderRadius: 16, overflow: 'hidden', boxShadow: 'var(--shadow-md)' }}>
+          <div style={{ background: 'var(--surface)', border: '1px solid var(--border-light)', borderRadius: 16, overflow: 'hidden', boxShadow: 'var(--shadow-md)' }}>
             <div style={{ overflowX: 'auto' }}>
               <table style={{ width: '100%', fontSize: '0.875rem', borderCollapse: 'collapse' }}>
                 <thead>
@@ -184,8 +184,8 @@ export default function DataInfo() {
                               display: 'inline-flex', alignItems: 'center',
                               padding: '2px 10px', borderRadius: 9999,
                               fontSize: '0.75rem', fontWeight: 500,
-                              background: row[col] === 1 ? 'var(--accent-red-light)' : 'var(--accent-green-light)',
-                              color: row[col] === 1 ? 'var(--accent-red-dark)' : 'var(--accent-green-dark)',
+                              background: row[col] === 1 ? 'var(--accent-red-dark)' : 'var(--accent-green-dark)',
+                              color: 'white',
                             }}>
                               {row[col] === 1 ? 'Diabetic' : 'Healthy'}
                             </span>
@@ -216,7 +216,7 @@ export default function DataInfo() {
                   id="page-prev"
                   style={{
                     padding: 8, borderRadius: 8, cursor: page === 0 ? 'default' : 'pointer',
-                    background: 'white', border: '1px solid var(--border)',
+                    background: 'var(--surface)', border: '1px solid var(--border)',
                     opacity: page === 0 ? 0.3 : 1, display: 'flex',
                   }}
                 >
@@ -233,7 +233,7 @@ export default function DataInfo() {
                       style={{
                         width: 32, height: 32, borderRadius: 8, fontSize: '0.75rem', fontWeight: 500,
                         cursor: 'pointer', transition: 'all 0.2s', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        background: page === pageNum ? 'var(--primary-600)' : 'white',
+                        background: page === pageNum ? 'var(--primary-600)' : 'var(--surface)',
                         color: page === pageNum ? 'white' : 'var(--text-secondary)',
                         border: page === pageNum ? 'none' : '1px solid var(--border)',
                       }}>
@@ -247,7 +247,7 @@ export default function DataInfo() {
                   id="page-next"
                   style={{
                     padding: 8, borderRadius: 8, cursor: page >= totalPages - 1 ? 'default' : 'pointer',
-                    background: 'white', border: '1px solid var(--border)',
+                    background: 'var(--surface)', border: '1px solid var(--border)',
                     opacity: page >= totalPages - 1 ? 0.3 : 1, display: 'flex',
                   }}
                 >

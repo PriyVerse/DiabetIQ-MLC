@@ -324,8 +324,8 @@ export default function Predict() {
                             <div className="bmi-value">{bmi}</div>
                           </div>
                           <div className="bmi-category" style={{
-                            background: bmi < 18.5 ? '#fef3c7' : bmi < 25 ? '#d1fae5' : bmi < 30 ? '#fef3c7' : '#fee2e2',
-                            color: bmi < 18.5 ? '#d97706' : bmi < 25 ? '#059669' : bmi < 30 ? '#d97706' : '#dc2626',
+                            background: bmi < 18.5 ? 'rgba(245, 158, 11, 0.2)' : bmi < 25 ? 'rgba(16, 185, 129, 0.2)' : bmi < 30 ? 'rgba(245, 158, 11, 0.2)' : 'rgba(239, 68, 68, 0.2)',
+                            color: bmi < 18.5 ? '#fbbf24' : bmi < 25 ? '#34d399' : bmi < 30 ? '#fbbf24' : '#f87171',
                           }}>
                             {bmi < 18.5 ? 'Underweight' : bmi < 25 ? 'Normal' : bmi < 30 ? 'Overweight' : 'Obese'}
                           </div>

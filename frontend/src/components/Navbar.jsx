@@ -57,7 +57,7 @@ export default function Navbar() {
                       : { color: 'var(--text-secondary)' }
                     ),
                   }}
-                  onMouseEnter={(e) => { if (!active) e.currentTarget.style.background = 'rgba(255,255,255,0.5)' }}
+                  onMouseEnter={(e) => { if (!active) e.currentTarget.style.background = 'rgba(255,255,255,0.1)' }}
                   onMouseLeave={(e) => { if (!active) e.currentTarget.style.background = 'transparent' }}
                 >
                   <Icon style={{ width: 16, height: 16 }} />

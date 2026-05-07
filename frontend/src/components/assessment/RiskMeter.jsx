@@ -37,7 +37,7 @@ export default function RiskMeter({ probability, riskLevel }) {
         >
           <line x1="110" y1="110" x2="110" y2="42" stroke={strokeColor} strokeWidth="2.5" strokeLinecap="round" />
           <circle cx="110" cy="110" r="6" fill={strokeColor} />
-          <circle cx="110" cy="110" r="3" fill="white" />
+          <circle cx="110" cy="110" r="3" fill="var(--surface)" />
         </g>
       </svg>
       <div className="risk-meter-value">

@@ -69,7 +69,7 @@ export default function Visualize() {
   const CustomTooltip = ({ active, payload, label }) => {
     if (!active || !payload?.length) return null
     return (
-      <div style={{ background: 'white', boxShadow: 'var(--shadow-lg)', border: '1px solid var(--border)', borderRadius: 12, padding: 12, fontSize: '0.75rem' }}>
+      <div style={{ background: 'var(--surface)', boxShadow: 'var(--shadow-lg)', border: '1px solid var(--border)', borderRadius: 12, padding: 12, fontSize: '0.75rem' }}>
         <p style={{ fontWeight: 600, marginBottom: 4, color: 'var(--text-primary)' }}>{label}</p>
         {payload.map((p, i) => (
           <p key={i} style={{ color: p.color }}>
@@ -126,7 +126,7 @@ export default function Visualize() {
         <div className="viz-grid-2" style={{ marginBottom: 48 }}>
           {/* Bar Chart */}
           <div style={{
-            background: 'white', border: '1px solid var(--border-light)',
+            background: 'var(--surface)', border: '1px solid var(--border-light)',
             borderRadius: 16, padding: 32, boxShadow: 'var(--shadow-md)',
           }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 24 }}>
@@ -135,9 +135,9 @@ export default function Visualize() {
             </div>
             <ResponsiveContainer width="100%" height={350}>
               <BarChart data={importance} layout="vertical" margin={{ left: 20, right: 20, top: 5, bottom: 5 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" horizontal={false} />
-                <XAxis type="number" tick={{ fontSize: 12, fill: '#94a3b8' }} unit="%" />
-                <YAxis type="category" dataKey="name" tick={{ fontSize: 12, fill: '#475569' }} width={100} />
+                <CartesianGrid strokeDasharray="3 3" stroke="#334155" horizontal={false} />
+                <XAxis type="number" tick={{ fontSize: 12, fill: '#cbd5e1' }} unit="%" />
+                <YAxis type="category" dataKey="name" tick={{ fontSize: 12, fill: '#94a3b8' }} width={100} />
                 <Tooltip content={<CustomTooltip />} />
                 <Bar dataKey="value" name="Importance" radius={[0, 8, 8, 0]} barSize={24}>
                   {importance.map((_, i) => (
@@ -150,7 +150,7 @@ export default function Visualize() {
 
           {/* Pie Chart */}
           <div style={{
-            background: 'white', border: '1px solid var(--border-light)',
+            background: 'var(--surface)', border: '1px solid var(--border-light)',
             borderRadius: 16, padding: 32, boxShadow: 'var(--shadow-md)',
           }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 24 }}>
@@ -178,7 +178,7 @@ export default function Visualize() {
 
         {/* User vs Average Section */}
         <div style={{
-          background: 'white', border: '1px solid var(--border-light)',
+          background: 'var(--surface)', border: '1px solid var(--border-light)',
           borderRadius: 16, padding: 32, boxShadow: 'var(--shadow-md)',
         }}>
           <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16, marginBottom: 24 }}>
@@ -237,8 +237,8 @@ export default function Visualize() {
                 <h3 style={{ fontSize: '0.875rem', fontWeight: 600, marginBottom: 16, color: 'var(--text-primary)' }}>Bar Comparison</h3>
                 <ResponsiveContainer width="100%" height={350}>
                   <BarChart data={comparisonData} margin={{ left: 0, right: 20, top: 5, bottom: 5 }}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-                    <XAxis dataKey="name" tick={{ fontSize: 10, fill: '#475569' }} angle={-30} textAnchor="end" height={60} />
+                    <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
+                    <XAxis dataKey="name" tick={{ fontSize: 10, fill: '#cbd5e1' }} angle={-30} textAnchor="end" height={60} />
                     <YAxis tick={{ fontSize: 12, fill: '#94a3b8' }} />
                     <Tooltip content={<CustomTooltip />} />
                     <Legend />
@@ -251,8 +251,8 @@ export default function Visualize() {
                 <h3 style={{ fontSize: '0.875rem', fontWeight: 600, marginBottom: 16, color: 'var(--text-primary)' }}>Radar Overview</h3>
                 <ResponsiveContainer width="100%" height={350}>
                   <RadarChart data={comparisonData.map(d => ({ ...d, avg: d.normalizedAvg, user: d.normalizedUser }))}>
-                    <PolarGrid stroke="#e2e8f0" />
-                    <PolarAngleAxis dataKey="name" tick={{ fontSize: 10, fill: '#475569' }} />
+                    <PolarGrid stroke="#334155" />
+                    <PolarAngleAxis dataKey="name" tick={{ fontSize: 10, fill: '#cbd5e1' }} />
                     <PolarRadiusAxis tick={{ fontSize: 10, fill: '#94a3b8' }} />
                     <Radar name="Dataset Avg" dataKey="avg" stroke="#3b82f6" fill="#3b82f6" fillOpacity={0.15} />
                     <Radar name="Your Value" dataKey="user" stroke="#10b981" fill="#10b981" fillOpacity={0.15} />

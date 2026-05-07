@@ -6,10 +6,10 @@ import { ShieldCheck, AlertTriangle, TrendingUp, Lightbulb, RotateCcw } from 'lu
 import RiskMeter from './RiskMeter'
 
 const riskStyles = {
-  low: { bg: 'linear-gradient(135deg, #f0fdf4, #d1fae5)', border: '#86efac', color: '#065f46', icon: ShieldCheck },
-  moderate: { bg: 'linear-gradient(135deg, #fffbeb, #fef3c7)', border: '#fde68a', color: '#92400e', icon: AlertTriangle },
-  high: { bg: 'linear-gradient(135deg, #fef2f2, #fee2e2)', border: '#fca5a5', color: '#991b1b', icon: AlertTriangle },
-  very_high: { bg: 'linear-gradient(135deg, #fef2f2, #fecaca)', border: '#f87171', color: '#7f1d1d', icon: AlertTriangle },
+  low: { bg: 'linear-gradient(135deg, rgba(16, 185, 129, 0.15), rgba(16, 185, 129, 0.05))', border: 'rgba(16, 185, 129, 0.3)', color: '#34d399', icon: ShieldCheck },
+  moderate: { bg: 'linear-gradient(135deg, rgba(245, 158, 11, 0.15), rgba(245, 158, 11, 0.05))', border: 'rgba(245, 158, 11, 0.3)', color: '#fbbf24', icon: AlertTriangle },
+  high: { bg: 'linear-gradient(135deg, rgba(239, 68, 68, 0.15), rgba(239, 68, 68, 0.05))', border: 'rgba(239, 68, 68, 0.3)', color: '#f87171', icon: AlertTriangle },
+  very_high: { bg: 'linear-gradient(135deg, rgba(220, 38, 38, 0.2), rgba(220, 38, 38, 0.05))', border: 'rgba(220, 38, 38, 0.4)', color: '#fca5a5', icon: AlertTriangle },
 }
 
 export default function ResultsPanel({ result, onReset }) {
