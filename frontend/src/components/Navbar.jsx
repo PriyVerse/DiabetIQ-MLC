@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import { Activity, Home, Sparkles, BarChart3, Database, Menu, X } from 'lucide-react'
+import { ModeToggle } from './ModeToggle'
 
 const navLinks = [
   { to: '/', label: 'Home', icon: Home },
@@ -65,6 +66,7 @@ export default function Navbar() {
                 </Link>
               )
             })}
+            <ModeToggle />
           </div>
 
           {/* Mobile toggle */}
@@ -108,6 +110,9 @@ export default function Navbar() {
                   </Link>
                 )
               })}
+              <div style={{ padding: '12px 16px' }}>
+                <ModeToggle />
+              </div>
             </div>
           </div>
         )}
