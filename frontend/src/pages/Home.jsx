@@ -32,10 +32,11 @@ const features = [
 ]
 
 const team = [
-  { name: 'Dr. Ananya Sharma', role: 'Lead Data Scientist', emoji: '👩‍🔬' },
-  { name: 'Raj Patel', role: 'ML Engineer', emoji: '🧑‍💻' },
-  { name: 'Dr. Meera Joshi', role: 'Medical Advisor', emoji: '👩‍⚕️' },
-  { name: 'Vikram Singh', role: 'Full-Stack Developer', emoji: '🛠️' },
+  { name: 'Priyanshu Nayak', role: 'Lead Architect + Web Dev', emoji: '👑' },
+  { name: 'Sajal Gupta', role: 'Web Dev', emoji: '💻' },
+  { name: 'Satish Shukla', role: 'Model Design', emoji: '🧠' },
+  { name: 'Kirtiraj Sahu', role: 'Support', emoji: '🤝' },
+  { name: 'Sandeep Mandal', role: 'Support', emoji: '🤝' },
 ]
 
 const stats = [
@@ -215,7 +216,7 @@ export default function Home() {
 
       {/* ── Team ─────────────────────────────────────────────────────── */}
       <section id="team" className="page-section" style={{ paddingTop: 80, paddingBottom: 80 }}>
-        <div className="section-inner-sm">
+        <div className="section-inner">
           <div style={{ textAlign: 'center', marginBottom: 64 }}>
             <h2 className="font-display" style={{ fontSize: 'clamp(1.75rem, 4vw, 2.5rem)', fontWeight: 700, marginBottom: 16, color: 'var(--text-primary)' }}>
               Meet the <span className="gradient-text">Team</span>
@@ -225,7 +226,7 @@ export default function Home() {
             </p>
           </div>
 
-          <div className="grid-4">
+          <div className="grid-5">
             {team.map(({ name, role, emoji }) => (
               <div key={name} className="card" style={{ textAlign: 'center', padding: 24 }}>
                 <div style={{ fontSize: '3rem', marginBottom: 16 }}>{emoji}</div>

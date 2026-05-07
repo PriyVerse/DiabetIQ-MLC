@@ -304,6 +304,17 @@ body {
   }
 }
 
+.grid-5 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+}
+@media (min-width: 768px) {
+  .grid-5 {
+    grid-template-columns: repeat(5, 1fr);
+  }
+}
+
 /* ── Card ───────────────────────────────────────────────────────────────── */
 .card {
   background: var(--surface);
