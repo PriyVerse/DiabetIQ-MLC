@@ -6,6 +6,7 @@ const API = axios.create({
 });
 
 export const predictDiabetes = (data) => API.post("/predict", data);
+export const smartPredict = (data) => API.post("/predict/smart", data);
 export const getStats = () => API.get("/stats");
 export const getFeatureImportance = () => API.get("/feature-importance");
 export const getAverages = () => API.get("/averages");

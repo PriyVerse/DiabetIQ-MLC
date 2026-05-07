@@ -1,324 +1,499 @@
-import { useState } from 'react'
-import { predictDiabetes } from '../api'
-import {
-  Sparkles, AlertTriangle, ShieldCheck, Info, Loader2,
-  Heart, Activity, Droplets, Ruler, Syringe, Scale, Dna, Calendar
-} from 'lucide-react'
+import { useState, useMemo } from 'react'
+import { Sparkles, ArrowRight, ArrowLeft, ChevronDown, Activity, Heart, Info, Loader2 } from 'lucide-react'
+import { smartPredict } from '../api'
+import ResultsPanel from '../components/assessment/ResultsPanel'
 
-const fields = [
-  {
-    key: 'pregnancies', label: 'Pregnancies', icon: Heart, placeholder: 'e.g. 2',
-    tip: 'Number of times pregnant. Enter 0 if never pregnant or not applicable.',
-    min: 0, max: 20, step: 1,
-  },
-  {
-    key: 'glucose', label: 'Glucose (mg/dL)', icon: Droplets, placeholder: 'e.g. 120',
-    tip: 'Plasma glucose concentration after 2 hours in an oral glucose tolerance test. Normal fasting: 70–100 mg/dL.',
-    min: 0, max: 300, step: 1,
-  },
-  {
-    key: 'blood_pressure', label: 'Blood Pressure (mm Hg)', icon: Activity, placeholder: 'e.g. 72',
-    tip: 'Diastolic blood pressure (the bottom number). Normal is below 80 mm Hg.',
-    min: 0, max: 200, step: 1,
-  },
-  {
-    key: 'skin_thickness', label: 'Skin Thickness (mm)', icon: Ruler, placeholder: 'e.g. 29',
-    tip: 'Triceps skinfold thickness in mm. Indicates subcutaneous fat. Average is about 20–30 mm.',
-    min: 0, max: 100, step: 1,
-  },
-  {
-    key: 'insulin', label: 'Insulin (mu U/ml)', icon: Syringe, placeholder: 'e.g. 125',
-    tip: '2-Hour serum insulin level. Normal fasting insulin: 2–25 mu U/ml.',
-    min: 0, max: 900, step: 1,
-  },
-  {
-    key: 'bmi', label: 'BMI (kg/m²)', icon: Scale, placeholder: 'e.g. 32.0',
-    tip: 'Body Mass Index = weight(kg) / height(m)². Normal: 18.5–24.9, Overweight: 25–29.9.',
-    min: 0, max: 80, step: 0.1,
-  },
-  {
-    key: 'diabetes_pedigree', label: 'Diabetes Pedigree Function', icon: Dna, placeholder: 'e.g. 0.627',
-    tip: 'A function scoring the likelihood of diabetes based on family history. Higher values indicate stronger genetic influence. Typical range: 0.08–2.42.',
-    min: 0, max: 3, step: 0.001,
-  },
-  {
-    key: 'age', label: 'Age (years)', icon: Calendar, placeholder: 'e.g. 35',
-    tip: 'Your current age in years.',
-    min: 1, max: 120, step: 1,
-  },
+const initialForm = {
+  age: '',
+  gender: '',
+  pregnancies: '',
+  height_cm: '',
+  weight_kg: '',
+  bp_category: 'dont_know',
+  family_history: 'none',
+  activity_level: 'moderate',
+  symptoms: [],
+  // Advanced fields
+  glucose: '',
+  insulin: '',
+  blood_pressure_exact: '',
+  skin_thickness: '',
+  diabetes_pedigree: ''
+}
+
+const symptomsList = [
+  { id: 'frequent_thirst', label: 'Frequent Thirst', icon: '💧' },
+  { id: 'frequent_urination', label: 'Frequent Urination', icon: '🚽' },
+  { id: 'fatigue', label: 'Fatigue', icon: '🥱' },
+  { id: 'blurred_vision', label: 'Blurred Vision', icon: '👓' },
+  { id: 'slow_healing', label: 'Slow Healing', icon: '🩹' },
+  { id: 'numbness', label: 'Numbness/Tingling', icon: '⚡' },
 ]
-
-const initialForm = Object.fromEntries(fields.map(f => [f.key, '']))
 
 export default function Predict() {
   const [form, setForm] = useState(initialForm)
+  const [mode, setMode] = useState('quick') // 'quick' or 'advanced'
+  const [step, setStep] = useState(1)
   const [result, setResult] = useState(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
-  const [openTip, setOpenTip] = useState(null)
+  const [advancedOpen, setAdvancedOpen] = useState(false)
 
-  const handleChange = (key, value) => {
-    setForm(prev => ({ ...prev, [key]: value }))
+  const totalSteps = 4
+
+  // BMI Calculation preview
+  const bmi = useMemo(() => {
+    if (form.height_cm && form.weight_kg) {
+      const h = parseFloat(form.height_cm) / 100
+      const w = parseFloat(form.weight_kg)
+      if (h > 0) return (w / (h * h)).toFixed(1)
+    }
+    return null
+  }, [form.height_cm, form.weight_kg])
+
+  const handleChange = (field, value) => {
+    setForm(prev => ({ ...prev, [field]: value }))
     if (error) setError('')
   }
 
-  const handleSubmit = async (e) => {
-    e.preventDefault()
-    setError('')
-    setResult(null)
-
-    for (const f of fields) {
-      if (form[f.key] === '' || form[f.key] === undefined) {
-        setError(`Please fill in "${f.label}"`)
-        return
+  const toggleSymptom = (id) => {
+    setForm(prev => {
+      const isSelected = prev.symptoms.includes(id)
+      let newSymptoms = []
+      if (id === 'none') {
+        newSymptoms = isSelected ? [] : ['none']
+      } else {
+        newSymptoms = isSelected
+          ? prev.symptoms.filter(s => s !== id)
+          : [...prev.symptoms.filter(s => s !== 'none'), id]
       }
+      return { ...prev, symptoms: newSymptoms }
+    })
+    if (error) setError('')
+  }
+
+  const validateStep = () => {
+    if (step === 1) {
+      if (!form.age || form.age < 1 || form.age > 120) return "Please enter a valid age."
+      if (!form.gender) return "Please select a gender."
+      if (form.gender === 'female' && form.pregnancies === '') return "Please specify number of pregnancies (enter 0 if none)."
+    }
+    if (step === 2) {
+      if (!form.height_cm || form.height_cm < 50 || form.height_cm > 250) return "Please enter a valid height in cm."
+      if (!form.weight_kg || form.weight_kg < 20 || form.weight_kg > 300) return "Please enter a valid weight in kg."
+    }
+    if (step === 3) {
+      if (!form.bp_category) return "Please select a blood pressure category."
+      if (!form.family_history) return "Please select your family history."
+    }
+    if (step === 4) {
+      if (!form.activity_level) return "Please select your activity level."
+      // symptoms are optional, 'none' is acceptable
+    }
+    return null
+  }
+
+  const nextStep = () => {
+    const err = validateStep()
+    if (err) {
+      setError(err)
+      return
+    }
+    setError('')
+    if (step < totalSteps) {
+      setStep(step + 1)
+    }
+  }
+
+  const prevStep = () => {
+    if (step > 1) {
+      setStep(step - 1)
+      setError('')
+    }
+  }
+
+  const handleSubmit = async () => {
+    const err = validateStep()
+    if (err) {
+      setError(err)
+      return
     }
 
     setLoading(true)
+    setError('')
+    
     try {
-      const payload = {}
-      for (const f of fields) {
-        payload[f.key] = parseFloat(form[f.key])
+      const payload = {
+        age: parseInt(form.age),
+        gender: form.gender,
+        height_cm: parseFloat(form.height_cm),
+        weight_kg: parseFloat(form.weight_kg),
+        bp_category: form.bp_category,
+        family_history: form.family_history,
+        activity_level: form.activity_level,
+        pregnancies: form.gender === 'female' ? parseInt(form.pregnancies) : undefined,
+        symptoms: form.symptoms.length > 0 ? form.symptoms : ['none']
       }
-      const { data } = await predictDiabetes(payload)
+
+      if (mode === 'advanced') {
+        if (form.glucose) payload.glucose = parseFloat(form.glucose)
+        if (form.insulin) payload.insulin = parseFloat(form.insulin)
+        if (form.blood_pressure_exact) payload.blood_pressure_exact = parseFloat(form.blood_pressure_exact)
+        if (form.skin_thickness) payload.skin_thickness = parseFloat(form.skin_thickness)
+        if (form.diabetes_pedigree) payload.diabetes_pedigree = parseFloat(form.diabetes_pedigree)
+      }
+
+      const { data } = await smartPredict(payload)
       setResult(data)
     } catch (err) {
-      setError(err.response?.data?.detail || 'Server error. Is the backend running on port 8000?')
+      setError(err.response?.data?.detail || 'Server error. Is the backend running?')
     } finally {
       setLoading(false)
     }
   }
 
-  const isHighRisk = result?.prediction === 1
+  const handleReset = () => {
+    setForm(initialForm)
+    setStep(1)
+    setResult(null)
+    setError('')
+    setAdvancedOpen(false)
+  }
+
+  // Option Card Helper
+  const OptionCard = ({ field, value, icon, label, desc }) => {
+    const isSelected = form[field] === value
+    return (
+      <div 
+        className={`option-card ${isSelected ? 'selected' : ''}`}
+        onClick={() => handleChange(field, value)}
+      >
+        <div className="option-card-icon">{icon}</div>
+        <div className="option-card-label">{label}</div>
+        {desc && <div className="option-card-desc">{desc}</div>}
+      </div>
+    )
+  }
 
   return (
-    <div className="page-section" style={{ paddingTop: 48, paddingBottom: 48 }}>
-      <div className="section-inner" style={{ maxWidth: 960 }}>
+    <div className="page-section" style={{ paddingTop: 48, paddingBottom: 64 }}>
+      <div className="section-inner">
         {/* Header */}
-        <div style={{ textAlign: 'center', marginBottom: 48 }}>
+        <div style={{ textAlign: 'center', marginBottom: 40 }}>
           <span className="badge animate-fade-in-up" style={{
             background: 'var(--primary-50)', color: 'var(--primary-700)',
             border: '1px solid var(--primary-200)', marginBottom: 16,
           }}>
             <Sparkles style={{ width: 16, height: 16 }} />
-            The Health Crystal Ball
+            AI Health Companion
           </span>
           <h1 className="font-display" style={{
             fontSize: 'clamp(2rem, 5vw, 3rem)', fontWeight: 700,
             marginBottom: 16, marginTop: 16,
           }}>
-            <span className="gradient-text">Risk Prediction</span>
+            <span className="gradient-text">Health Assessment</span>
           </h1>
-          <p style={{ fontSize: '1rem', maxWidth: 560, margin: '0 auto', color: 'var(--text-secondary)' }}>
-            Enter your 8 health parameters below and our AI model will assess your diabetes risk instantly.
+          <p style={{ fontSize: '1rem', maxWidth: 600, margin: '0 auto', color: 'var(--text-secondary)' }}>
+            Discover your personalized diabetes risk profile through our intelligent guided screening.
           </p>
         </div>
 
-        <div className="predict-layout">
-          {/* Form */}
-          <form onSubmit={handleSubmit} id="prediction-form">
-            <div style={{
-              background: 'white', border: '1px solid var(--border-light)',
-              borderRadius: 16, padding: 32, boxShadow: 'var(--shadow-md)',
-            }}>
-              <div style={{
-                display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 16,
-              }}>
-                {fields.map(({ key, label, icon: Icon, placeholder, tip, min, max, step }) => (
-                  <div key={key} style={{ position: 'relative' }}>
-                    <label style={{
-                      display: 'flex', alignItems: 'center', gap: 8,
-                      fontSize: '0.875rem', fontWeight: 500, marginBottom: 6,
-                      color: 'var(--text-primary)',
-                    }}>
-                      <Icon style={{ width: 16, height: 16, color: 'var(--primary-500)' }} />
-                      {label}
-                      <button
-                        type="button"
-                        onClick={() => setOpenTip(openTip === key ? null : key)}
-                        aria-label={`Info about ${label}`}
-                        style={{
-                          marginLeft: 'auto', padding: 2, borderRadius: 20,
-                          border: 'none', cursor: 'pointer', background: 'transparent',
-                          display: 'flex', alignItems: 'center',
-                        }}
-                      >
-                        <Info style={{ width: 14, height: 14, color: 'var(--text-muted)' }} />
-                      </button>
-                    </label>
+        {/* Mode Selector */}
+        {!result && (
+          <div className="mode-selector animate-fade-in-up stagger-1">
+            <button 
+              type="button" 
+              className={`mode-btn ${mode === 'quick' ? 'active' : ''}`}
+              onClick={() => { setMode('quick'); setAdvancedOpen(false) }}
+            >
+              ⚡ Quick Screening
+            </button>
+            <button 
+              type="button" 
+              className={`mode-btn ${mode === 'advanced' ? 'active' : ''}`}
+              onClick={() => setMode('advanced')}
+            >
+              🔬 Advanced Analysis
+            </button>
+          </div>
+        )}
 
-                    {openTip === key && (
-                      <div className="animate-slide-down" style={{
-                        position: 'absolute', zIndex: 20, left: 0, right: 0, top: '100%',
-                        marginTop: 4, padding: 12, borderRadius: 12,
-                        fontSize: '0.75rem', lineHeight: 1.6,
-                        background: 'var(--primary-50)', color: 'var(--primary-800)',
-                        border: '1px solid var(--primary-200)', boxShadow: 'var(--shadow-md)',
-                      }}>
-                        {tip}
+        <div className="assessment-container mt-8">
+          {result ? (
+            <ResultsPanel result={result} onReset={handleReset} />
+          ) : (
+            <>
+              {/* Wizard Progress */}
+              <div className="step-progress animate-fade-in-up stagger-2">
+                {[1, 2, 3, 4].map(s => (
+                  <div key={s} style={{ display: 'flex', alignItems: 'center' }}>
+                    <div className="step-indicator">
+                      <div className={`step-dot ${step === s ? 'active' : ''} ${step > s ? 'completed' : ''}`}>
+                        {step > s ? '✓' : s}
                       </div>
+                      <div className={`step-label ${step === s ? 'active' : ''} ${step > s ? 'completed' : ''}`}>
+                        {s === 1 ? 'Basics' : s === 2 ? 'Body' : s === 3 ? 'Profile' : 'Lifestyle'}
+                      </div>
+                    </div>
+                    {s < 4 && (
+                      <div className={`step-connector ${step > s ? 'completed' : ''}`} />
                     )}
-
-                    <input
-                      id={`input-${key}`}
-                      type="number"
-                      min={min} max={max} step={step}
-                      placeholder={placeholder}
-                      value={form[key]}
-                      onChange={(e) => handleChange(key, e.target.value)}
-                      className="form-input"
-                    />
                   </div>
                 ))}
               </div>
 
-              {error && (
-                <div className="animate-slide-down" style={{
-                  marginTop: 16, display: 'flex', alignItems: 'center', gap: 8,
-                  padding: '12px 16px', borderRadius: 12, fontSize: '0.875rem',
-                  background: 'var(--accent-red-light)', color: 'var(--accent-red-dark)',
-                  border: '1px solid var(--accent-red)',
-                }}>
-                  <AlertTriangle style={{ width: 16, height: 16, flexShrink: 0 }} />
-                  {error}
-                </div>
-              )}
+              {/* Wizard Form */}
+              <div className="assessment-card animate-fade-in-up stagger-3">
+                
+                {/* Step 1: Basics */}
+                {step === 1 && (
+                  <div className="step-content-enter">
+                    <h2 className="step-title">Let's start with the basics</h2>
+                    <p className="step-subtitle">This helps our AI calibrate its baseline predictions.</p>
+                    
+                    <div className="step-field-group">
+                      <div>
+                        <label className="field-label">Age</label>
+                        <input
+                          type="number"
+                          className="form-input"
+                          placeholder="Years"
+                          value={form.age}
+                          onChange={(e) => handleChange('age', e.target.value)}
+                        />
+                      </div>
+                      
+                      <div>
+                        <label className="field-label">Biological Sex</label>
+                        <div className="option-grid cols-2">
+                          <OptionCard field="gender" value="male" icon="👨" label="Male" />
+                          <OptionCard field="gender" value="female" icon="👩" label="Female" />
+                        </div>
+                      </div>
 
-              <button
-                type="submit"
-                id="submit-prediction"
-                disabled={loading}
-                className="btn-primary"
-                style={{
-                  width: '100%', marginTop: 24, justifyContent: 'center',
-                  padding: '14px 24px', fontSize: '1rem',
-                  opacity: loading ? 0.6 : 1, cursor: loading ? 'not-allowed' : 'pointer',
-                }}
-              >
-                {loading ? (
-                  <>
-                    <Loader2 style={{ width: 20, height: 20, animation: 'spin-slow 1s linear infinite' }} />
-                    Analyzing...
-                  </>
-                ) : (
-                  <>
-                    <Sparkles style={{ width: 20, height: 20 }} />
-                    Predict My Risk
-                  </>
-                )}
-              </button>
-            </div>
-          </form>
-
-          {/* Results Panel */}
-          <div>
-            {result ? (
-              <div id="result-card" style={{
-                borderRadius: 16, padding: 32, textAlign: 'center',
-                background: isHighRisk
-                  ? 'linear-gradient(135deg, #fef2f2, #fee2e2)'
-                  : 'linear-gradient(135deg, #f0fdf4, #d1fae5)',
-                border: `2px solid ${isHighRisk ? 'var(--accent-red)' : 'var(--accent-green)'}`,
-                boxShadow: isHighRisk ? 'var(--shadow-glow-red)' : 'var(--shadow-glow-green)',
-              }}>
-                {/* Icon */}
-                <div className="animate-pulse-soft" style={{
-                  width: 80, height: 80, borderRadius: '50%',
-                  margin: '0 auto 24px',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  background: isHighRisk ? 'var(--accent-red)' : 'var(--accent-green)',
-                }}>
-                  {isHighRisk
-                    ? <AlertTriangle style={{ width: 40, height: 40, color: 'white' }} />
-                    : <ShieldCheck style={{ width: 40, height: 40, color: 'white' }} />
-                  }
-                </div>
-
-                <h2 className="font-display" style={{
-                  fontSize: '1.875rem', fontWeight: 700, marginBottom: 8,
-                  color: isHighRisk ? 'var(--accent-red-dark)' : 'var(--accent-green-dark)',
-                }}>
-                  {result.risk_label}
-                </h2>
-
-                {/* Probability */}
-                <div style={{ marginBottom: 24 }}>
-                  <p style={{ fontSize: '0.875rem', marginBottom: 8, color: isHighRisk ? '#b91c1c' : '#047857' }}>
-                    Diabetes Risk Probability
-                  </p>
-                  <div style={{
-                    width: '100%', height: 16, borderRadius: 9999,
-                    overflow: 'hidden', background: isHighRisk ? '#fecaca' : '#a7f3d0',
-                  }}>
-                    <div style={{
-                      height: '100%', borderRadius: 9999,
-                      width: `${result.probability}%`,
-                      transition: 'width 1s ease-out',
-                      background: isHighRisk
-                        ? 'linear-gradient(90deg, #f87171, #ef4444)'
-                        : 'linear-gradient(90deg, #34d399, #10b981)',
-                    }} />
+                      {form.gender === 'female' && (
+                        <div className="animate-slide-down">
+                          <label className="field-label">Pregnancies</label>
+                          <input
+                            type="number"
+                            className="form-input"
+                            placeholder="Number of times pregnant (0 if none)"
+                            value={form.pregnancies}
+                            onChange={(e) => handleChange('pregnancies', e.target.value)}
+                          />
+                        </div>
+                      )}
+                    </div>
                   </div>
-                  <p className="font-display" style={{
-                    fontSize: '2.5rem', fontWeight: 700, marginTop: 12,
-                    color: isHighRisk ? 'var(--accent-red)' : 'var(--accent-green)',
+                )}
+
+                {/* Step 2: Body Metrics */}
+                {step === 2 && (
+                  <div className="step-content-enter">
+                    <h2 className="step-title">Body Metrics</h2>
+                    <p className="step-subtitle">We'll automatically calculate your Body Mass Index (BMI).</p>
+                    
+                    <div className="step-field-group">
+                      <div>
+                        <label className="field-label">Height (cm)</label>
+                        <input
+                          type="number"
+                          className="form-input"
+                          placeholder="e.g. 175"
+                          value={form.height_cm}
+                          onChange={(e) => handleChange('height_cm', e.target.value)}
+                        />
+                      </div>
+                      
+                      <div>
+                        <label className="field-label">Weight (kg)</label>
+                        <input
+                          type="number"
+                          className="form-input"
+                          placeholder="e.g. 70"
+                          value={form.weight_kg}
+                          onChange={(e) => handleChange('weight_kg', e.target.value)}
+                        />
+                      </div>
+
+                      {bmi && (
+                        <div className="bmi-display animate-slide-down">
+                          <Activity style={{ width: 24, height: 24, color: 'var(--primary-500)' }} />
+                          <div style={{ flex: 1 }}>
+                            <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Calculated BMI</div>
+                            <div className="bmi-value">{bmi}</div>
+                          </div>
+                          <div className="bmi-category" style={{
+                            background: bmi < 18.5 ? '#fef3c7' : bmi < 25 ? '#d1fae5' : bmi < 30 ? '#fef3c7' : '#fee2e2',
+                            color: bmi < 18.5 ? '#d97706' : bmi < 25 ? '#059669' : bmi < 30 ? '#d97706' : '#dc2626',
+                          }}>
+                            {bmi < 18.5 ? 'Underweight' : bmi < 25 ? 'Normal' : bmi < 30 ? 'Overweight' : 'Obese'}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {/* Step 3: Health Profile */}
+                {step === 3 && (
+                  <div className="step-content-enter">
+                    <h2 className="step-title">Health Profile</h2>
+                    <p className="step-subtitle">Tell us about your family history and blood pressure.</p>
+                    
+                    <div className="step-field-group">
+                      <div>
+                        <label className="field-label">Blood Pressure</label>
+                        <div className="option-grid cols-2">
+                          <OptionCard field="bp_category" value="normal" icon="✅" label="Normal" desc="Usually around 120/80" />
+                          <OptionCard field="bp_category" value="sometimes_high" icon="⚠️" label="Sometimes High" desc="Occasionally elevated" />
+                          <OptionCard field="bp_category" value="diagnosed_high" icon="🔴" label="High BP" desc="Diagnosed hypertension" />
+                          <OptionCard field="bp_category" value="dont_know" icon="🤷" label="I don't know" desc="Not sure" />
+                        </div>
+                      </div>
+                      
+                      <div>
+                        <label className="field-label">Family History of Diabetes</label>
+                        <div className="option-grid cols-2">
+                          <OptionCard field="family_history" value="none" icon="❌" label="None" desc="No known family history" />
+                          <OptionCard field="family_history" value="grandparent" icon="👴" label="Grandparents" desc="Extended family" />
+                          <OptionCard field="family_history" value="parent_or_sibling" icon="👨‍👩‍👧" label="Parent or Sibling" desc="Immediate family" />
+                          <OptionCard field="family_history" value="multiple_close" icon="👨‍👩‍👧‍👦" label="Multiple" desc="Multiple close relatives" />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Step 4: Lifestyle */}
+                {step === 4 && (
+                  <div className="step-content-enter">
+                    <h2 className="step-title">Lifestyle & Symptoms</h2>
+                    <p className="step-subtitle">Your daily habits and recent health observations.</p>
+                    
+                    <div className="step-field-group">
+                      <div>
+                        <label className="field-label">Activity Level</label>
+                        <div className="option-grid cols-3">
+                          <OptionCard field="activity_level" value="sedentary" icon="🛋️" label="Sedentary" desc="Little to no exercise" />
+                          <OptionCard field="activity_level" value="light" icon="🚶" label="Light" desc="Occasional activity" />
+                          <OptionCard field="activity_level" value="moderate" icon="🏃" label="Moderate" desc="Regular exercise" />
+                          <OptionCard field="activity_level" value="active" icon="🚴" label="Active" desc="Frequent workouts" />
+                          <OptionCard field="activity_level" value="very_active" icon="🔥" label="Very Active" desc="Intense training" />
+                        </div>
+                      </div>
+                      
+                      <div>
+                        <label className="field-label">Recent Symptoms (Select all that apply)</label>
+                        <div className="symptom-grid">
+                          <div 
+                            className={`symptom-chip ${form.symptoms.includes('none') ? 'active' : ''}`}
+                            onClick={() => toggleSymptom('none')}
+                          >
+                            <span className="chip-icon">✨</span> None
+                          </div>
+                          {symptomsList.map(sym => (
+                            <div 
+                              key={sym.id}
+                              className={`symptom-chip ${form.symptoms.includes(sym.id) ? 'active' : ''} ${form.symptoms.includes('none') ? 'opacity-50 pointer-events-none' : ''}`}
+                              onClick={() => toggleSymptom(sym.id)}
+                            >
+                              <span className="chip-icon">{sym.icon}</span> {sym.label}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+
+                      {mode === 'advanced' && (
+                        <div className="advanced-accordion mt-4">
+                          <button 
+                            type="button" 
+                            className="advanced-accordion-header"
+                            onClick={() => setAdvancedOpen(!advancedOpen)}
+                          >
+                            <Heart style={{ width: 16, height: 16 }} />
+                            Add Lab Results (Optional)
+                            <ChevronDown className={`advanced-accordion-chevron ${advancedOpen ? 'open' : ''}`} style={{ width: 16, height: 16 }} />
+                          </button>
+                          
+                          {advancedOpen && (
+                            <div className="advanced-accordion-body">
+                              <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: 16 }}>
+                                Entering specific lab values will override the estimations and increase prediction accuracy.
+                              </p>
+                              <div className="grid-2">
+                                <div>
+                                  <label className="field-label">Glucose (mg/dL)</label>
+                                  <input type="number" className="form-input" placeholder="e.g. 110" value={form.glucose} onChange={(e) => handleChange('glucose', e.target.value)} />
+                                </div>
+                                <div>
+                                  <label className="field-label">Insulin (mu U/ml)</label>
+                                  <input type="number" className="form-input" placeholder="e.g. 125" value={form.insulin} onChange={(e) => handleChange('insulin', e.target.value)} />
+                                </div>
+                                <div>
+                                  <label className="field-label">Diastolic BP (mm Hg)</label>
+                                  <input type="number" className="form-input" placeholder="e.g. 72" value={form.blood_pressure_exact} onChange={(e) => handleChange('blood_pressure_exact', e.target.value)} />
+                                </div>
+                                <div>
+                                  <label className="field-label">Skin Thickness (mm)</label>
+                                  <input type="number" className="form-input" placeholder="e.g. 29" value={form.skin_thickness} onChange={(e) => handleChange('skin_thickness', e.target.value)} />
+                                </div>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {/* Error Display */}
+                {error && (
+                  <div className="animate-slide-down" style={{
+                    marginTop: 20, display: 'flex', alignItems: 'center', gap: 8,
+                    padding: '12px 16px', borderRadius: 12, fontSize: '0.875rem',
+                    background: 'var(--accent-red-light)', color: 'var(--accent-red-dark)',
                   }}>
-                    {result.probability}%
-                  </p>
+                    <Info style={{ width: 16, height: 16, flexShrink: 0 }} />
+                    {error}
+                  </div>
+                )}
+
+                {/* Navigation */}
+                <div className="step-nav">
+                  {step > 1 ? (
+                    <button type="button" className="step-nav-btn back" onClick={prevStep} disabled={loading}>
+                      <ArrowLeft style={{ width: 16, height: 16 }} /> Back
+                    </button>
+                  ) : (
+                    <div /> // Placeholder for flex-between
+                  )}
+                  
+                  {step < totalSteps ? (
+                    <button type="button" className="step-nav-btn next" onClick={nextStep} disabled={loading}>
+                      Continue <ArrowRight style={{ width: 16, height: 16 }} />
+                    </button>
+                  ) : (
+                    <button 
+                      type="button" 
+                      className={`step-nav-btn submit ${loading ? '' : 'pulse-glow'}`} 
+                      onClick={handleSubmit} 
+                      disabled={loading}
+                    >
+                      {loading ? (
+                        <><Loader2 style={{ width: 18, height: 18, animation: 'spin-slow 1s linear infinite' }} /> Analyzing...</>
+                      ) : (
+                        <><Sparkles style={{ width: 18, height: 18 }} /> Show My Results</>
+                      )}
+                    </button>
+                  )}
                 </div>
 
-                {/* Confidence */}
-                <div style={{
-                  borderRadius: 12, padding: 16,
-                  background: 'rgba(255,255,255,0.6)',
-                  border: '1px solid rgba(0,0,0,0.05)',
-                }}>
-                  <p style={{ fontSize: '0.75rem', fontWeight: 500, marginBottom: 4, color: 'var(--text-muted)' }}>Model Confidence</p>
-                  <p className="font-display" style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--text-primary)' }}>{result.confidence}%</p>
-                </div>
-
-                <p style={{ fontSize: '0.75rem', marginTop: 24, lineHeight: 1.6, color: 'var(--text-muted)' }}>
-                  ⚕️ This is a screening tool, not a medical diagnosis.
-                  Please consult a healthcare professional for clinical advice.
-                </p>
               </div>
-            ) : (
-              <div style={{
-                borderRadius: 16, padding: 32, textAlign: 'center',
-                display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-                background: 'white', border: '1px dashed var(--border)', minHeight: 400,
-              }}>
-                <div style={{
-                  width: 64, height: 64, borderRadius: '50%',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  background: 'var(--surface-secondary)', marginBottom: 16,
-                }}>
-                  <Sparkles style={{ width: 32, height: 32, color: 'var(--primary-300)' }} />
-                </div>
-                <h3 className="font-display" style={{ fontSize: '1.125rem', fontWeight: 600, marginBottom: 8, color: 'var(--text-primary)' }}>
-                  Your Results Will Appear Here
-                </h3>
-                <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)' }}>
-                  Fill in the form and click "Predict My Risk" to see your assessment.
-                </p>
-              </div>
-            )}
-          </div>
+            </>
+          )}
         </div>
       </div>
-
-      <style>{`
-        .predict-layout {
-          display: grid;
-          grid-template-columns: 3fr 2fr;
-          gap: 32px;
-          align-items: start;
-        }
-        @media (max-width: 900px) {
-          .predict-layout { grid-template-columns: 1fr !important; }
-          .predict-layout form div[style*="grid-template-columns: repeat(2"] { grid-template-columns: 1fr !important; }
-        }
-      `}</style>
     </div>
   )
 }
