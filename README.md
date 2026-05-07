@@ -19,18 +19,10 @@ A full-stack web application that uses **Machine Learning** to predict diabetes 
 
 | Page | Description |
 |------|-------------|
-| **Home** | Landing page with hero section, feature highlights, team, and CTA |
+| **Home** | Landing page with hero section, feature highlights, and CTA |
 | **Predict** | Interactive form for 8 health parameters → instant AI risk assessment |
 | **Visualize** | Feature importance charts & user vs. average comparison |
 | **Data Info** | Paginated, sortable dataset table with summary statistics |
-
-## 👥 Meet the Team
-
-- **Priyanshu Nayak** — Lead Architect + Web Dev 👑
-- **Sajal Gupta** — Web Dev 💻
-- **Satish Shukla** — Model Design 🧠
-- **Kirtiraj Sahu** — Support 🤝
-- **Sandeep Mandal** — Support 🤝
 
 ## 🛠️ Tech Stack
 
